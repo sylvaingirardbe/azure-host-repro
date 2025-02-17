@@ -54,7 +54,7 @@ jobs:
         inputs:
           #containerRegistry: 'prod-global-container-registry'
           containerRegistry: 'prod-global-container-registry'
-          repository: 'akstestlogicapp' # replace
+          repository: 'akstestlogicapp-repro' # replace
           command: 'build'
           Dockerfile: '$(System.DefaultWorkingDirectory)/Dockerfile'
           buildContext: '$(System.DefaultWorkingDirectory)/src'
@@ -66,7 +66,7 @@ jobs:
         displayName: Docker push
         inputs:
           containerRegistry: 'prod-global-container-registry'
-          repository: 'akstestlogicapp' # replace
+          repository: 'akstestlogicapp-repro' # replace
           command: 'push'
           tags: |
             latest

@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: welbctdatalayeradapter.azurecr.io/akstestlogicapp
+  repository: welbctdatalayeradapter.azurecr.io/akstestlogicapp-repro
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   # tag: "latest"
