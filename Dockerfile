@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/azure-functions/dotnet:3.0.14492-appservice
+FROM mcr.microsoft.com/azure-functions/node:4.0-node18-appservice
 
 ENV AZURE_FUNCTIONS_ENVIRONMENT Development
 ENV AzureWebJobsScriptRoot=/home/site/wwwroot

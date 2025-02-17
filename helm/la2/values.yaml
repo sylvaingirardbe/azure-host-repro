@@ -61,6 +61,7 @@ ingress:
 
 env:
   AzureFunctionsJobHost__Logging__LogLevel__Default: Trace
+  AzureFunctionsJobHost__Logging__Console__IsEnabled: true
 
 envFromSecret:
   - name: "AzureWebJobsStorage"
