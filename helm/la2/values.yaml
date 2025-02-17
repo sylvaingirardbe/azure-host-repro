@@ -59,6 +59,9 @@ ingress:
       hosts:
         - la2.test.lbctt.bet
 
+env:
+  AzureFunctionsJobHost__Logging__LogLevel__Default: Trace
+
 envFromSecret:
   - name: "AzureWebJobsStorage"
     secretName: azurewebstorage
