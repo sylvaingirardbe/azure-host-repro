@@ -1,0 +1,101 @@
+name: aktestlogicapp_$(Date:yyyyMMdd)$(Rev:.r)
+
+# parameters:
+#  - name: deployDatabase
+#    displayName: Deploy database
+#    type: boolean
+#    default: false
+
+trigger:
+  branches:
+    include:
+      - 'dev'
+      - 'release/*'
+      - 'main'
+  paths:
+    exclude:
+      - 'infra/*'
+    include:
+      - 'azure-pipelines.yml'
+      - 'Dockerfile'
+      - 'src/*'
+
+variables:
+  subscription: 'WE-T-GLOBAL-INTEGRATION-LAYER-SUBSCRIPTION-AKS'
+  cluster: 'we-lbc-t-gl-int-lay-aks'
+  rg: 'we-lbc-t-gl-int-lay-kubernetes-cluster-rg'
+  namespace: 'logicapptest'
+
+pool:
+  vmImage: 'ubuntu-latest' 
+
+jobs:
+  - job: Build
+    displayName: 'Build and push Docker image'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - task: gitversion/setup@3.1.1
+        displayName: Setup GitVersion
+        inputs:
+          versionSpec: '6.0.x'
+      - task: gitversion/execute@3.1.1
+        displayName: Determine Version
+      - bash: |
+          echo "##vso[task.setvariable variable=GITVERSION;isOutput=true;]$(GitVersion.SemVer)"
+          echo "##vso[task.setvariable variable=SHA;isOutput=true;]$(GitVersion.Sha)"
+          echo "##vso[task.setvariable variable=InformationalVersion;isOutput=true;]$(GitVersion.InformationalVersion)"
+          echo "variable GITVERSION value is $(GitVersion.SemVer)"
+          echo "variable SHA value is $(GitVersion.Sha)"
+          echo "variable InformationalVersion value is $(GitVersion.InformationalVersion)"
+        name: JobGitVersion
+      - task: Docker@2
+        displayName: Docker build
+        inputs:
+          #containerRegistry: 'prod-global-container-registry'
+          containerRegistry: 'prod-global-container-registry'
+          repository: 'akstestlogicapp' # replace
+          command: 'build'
+          Dockerfile: '$(System.DefaultWorkingDirectory)/Dockerfile'
+          buildContext: '$(System.DefaultWorkingDirectory)/src'
+          arguments: '--build-arg FEED_ACCESSTOKEN --build-arg VERSION=0.4.0' # $(GitVersion.SemVer)'
+          tags: |
+            latest
+            $(GitVersion.SemVer)
+      - task: Docker@2
+        displayName: Docker push
+        inputs:
+          containerRegistry: 'prod-global-container-registry'
+          repository: 'akstestlogicapp' # replace
+          command: 'push'
+          tags: |
+            latest
+            $(GitVersion.SemVer)
+  - job: Deploy
+    displayName: 'Deploy to AKS'
+    dependsOn: Build
+    variables:
+      SemVer: $[ dependencies.Build.outputs['JobGitVersion.GITVERSION'] ]
+      Sha: $[ dependencies.Build.outputs['JobGitVersion.SHA'] ]
+    pool:
+      name: 'Default'
+    steps:
+      - task: KubeloginInstaller@0
+      - task: HelmInstaller@1
+        displayName: 'Install Helm'
+      - task: KubectlInstaller@0
+        displayName: 'Install Kubectl latest'
+      - task: HelmDeploy@0
+        displayName: 'helm upgrade api'
+        inputs:
+          azureSubscription: '$(subscription)'
+          azureResourceGroup: '$(rg)'
+          kubernetesCluster: '$(cluster)'
+          namespace: '$(namespace)'
+          command: upgrade
+          chartType: FilePath
+          chartPath: 'helm/la2'
+          releaseName: 'la2'
+          overrideValues: 'image.tag="$(SemVer)"'
+          valueFile: 'helm/la2/values.yaml'
+          arguments: '--cleanup-on-fail --create-namespace --timeout 3m0s --install'
