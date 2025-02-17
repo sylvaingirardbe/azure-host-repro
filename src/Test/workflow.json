@@ -1,0 +1,52 @@
+{
+"definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Response": {
+                "type": "Response",
+                "kind": "Http",
+                "inputs": {
+                    "statusCode": 200,
+                    "body": {
+                        "message": "yipie-kay-yee motherfuckers"
+                    }
+                },
+                "runAfter": {
+                    "Upload_blob_to_storage_container": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Upload_blob_to_storage_container": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "containerName": "akstest",
+                        "blobName": "test",
+                        "content": {
+                            "json": "json"
+                        }
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureBlob",
+                        "operationId": "uploadBlob",
+                        "serviceProviderId": "/serviceProviders/AzureBlob"
+                    }
+                },
+                "runAfter": {}
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "triggers": {
+            "request": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                  "method": "GET"
+                }
+            }
+        }
+    },
+  "kind": "Stateless"
+}
